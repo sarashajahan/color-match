@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Puzzle</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600&display=swap');
+
+*{box-sizing:border-box;font-family:'Baloo 2', cursive;}
+
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#4b6cff,#9b5cff);
+    overflow:hidden;
+}
+
+.screen{
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(10px);
+    padding:25px;
+    border-radius:20px;
+    text-align:center;
+    width:640px;
+    box-shadow:0 0 25px rgba(255,255,255,0.2);
+    animation:fadeIn 1s ease;
+}
+
+@keyframes fadeIn{
+    from{opacity:0;transform:scale(0.9)}
+    to{opacity:1;transform:scale(1)}
+}
+
+h1,h2{color:white;text-shadow:0 0 10px rgba(255,255,255,0.6)}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin:20px 0;
+}
+
+.dot{
+    width:60px;
+    height:60px;
+    margin-left: 45px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.3);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:30px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.dot:hover{transform:scale(1.1);}
+.selected{box-shadow:0 0 15px white;}
+
+button{
+    border:none;
+    padding:12px 20px;
+    font-size:18px;
+    border-radius:12px;
+    cursor:pointer;
+    transition:0.25s;
+}
+
+#yesBtn{background:#2cffb3;}
+
+
+/* Cute popup text */
+.noHint{
+    position:fixed;
+    background:#ffffff;
+    color:#6b5cff;
+    padding:6px 12px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:bold;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+    animation:hintPop 0.6s ease forwards;
+    pointer-events:none;
+    z-index:10000;
+}
+
+@keyframes hintPop{
+    0%{transform:scale(0);opacity:0}
+    50%{transform:scale(1.1);opacity:1}
+    100%{transform:scale(1);opacity:0}
+}
+
+
+.floating span{
+    position:absolute;
+    animation:float 6s infinite linear;
+    font-size:22px;
+    opacity:0.7;
+}
+
+@keyframes float{
+    from{transform:translateY(100vh)}
+    to{transform:translateY(-10vh)}
+}
+
+#finalMsg{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    justify-content:center;
+    align-items:center;
+    z-index:10;
+}
+
+.msgBox{
+    background:rgb(225, 126, 255);
+    padding:30px;
+    border-radius:20px;
+    width:320px;
+    text-align:center;
+    animation:pop 0.5s ease;
+}
+
+@keyframes pop{
+    from{transform:scale(0)}
+    to{transform:scale(1)}
+}
+
+.confetti{
+    position:absolute;
+    width:10px;
+    height:10px;
+    animation:confetti 3s linear infinite;
+}
+
+@keyframes confetti{
+    from{transform:translateY(-100vh) rotate(0)}
+    to{transform:translateY(100vh) rotate(360deg)}
+}
+
+/* MAP */
+.map{
+    position:relative;
+    margin:30px auto;
+    width:260px;
+    height:120px;
+}
+
+.level{
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    background:white;
+    color:#6b5cff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:22px;
+    font-weight:bold;
+    box-shadow:0 0 15px rgba(255,255,255,0.7);
+}
+
+.level1{position:absolute;left:0;top:35px;}
+.level2{position:absolute;right:0;top:35px;}
+
+.path{
+    position:absolute;
+    top:62px;
+    left:55px;
+    width:150px;
+    height:4px;
+    background:rgba(255,255,255,0.4);
+    border-radius:10px;
+}
+
+.dotMove{
+    position:absolute;
+    top:55px;
+    left:55px;
+    width:15px;
+    height:15px;
+    border-radius:50%;
+    background:#2cffb3;
+    box-shadow:0 0 10px #2cffb3;
+    animation:travel 2.5s linear forwards;
+}
+
+@keyframes travel{
+    from{left:55px}
+    to{left:205px}
+}
+
+/* Envelope */
+.envelope{
+    width:120px;
+    height:80px;
+    margin:15px auto 0;
+    background:white;
+    border-radius:8px;
+    position:relative;
+    cursor:pointer;
+    animation:bounce 1.5s infinite;
+}
+
+.envelope::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg,#4b6cff,#9b5cff);
+    clip-path:polygon(0 0,50% 50%,100% 0,100% 100%,0 100%);
+}
+
+@keyframes bounce{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-8px)}
+}
+
+/* Teddy Popup */
+#teddyPopup{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:20;
+}
+
+.teddyBox{
+    background:white;
+    padding:25px 30px;
+    border-radius:20px;
+    text-align:center;
+    animation:pop 0.6s ease;
+}
+
+.teddy{
+    font-size:80px;
+    animation:dance 1s infinite alternate;
+}
+
+@keyframes dance{
+    from{transform:rotate(-5deg) scale(1)}
+    to{transform:rotate(5deg) scale(1.1)}
+}
+
+.teddyText{
+    font-size:20px;
+    color:#5c8dfe;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="floating"></div>
+
+<div class="screen" id="gameScreen">
+<h1>🎨 Color Connect Puzzle</h1>
+<h2 id="timer">⏳ 30s</h2>
+<div class="grid" id="grid"></div>
+<p style="color:white;">Match all colors 😄</p>
+</div>
+
+<div class="screen" id="mapScreen" style="display:none;">
+<h1>🗺️ Traveling to Level 2...</h1>
+<div class="map">
+    <div class="level level1">1</div>
+    <div class="path"></div>
+    <div class="dotMove"></div>
+    <div class="level level2">2</div>
+</div>
+<p style="color:white;">Get ready for a surprise 😏✨</p>
+</div>
+
+<div class="screen" id="questionScreen" style="display:none;">
+<h1>💜 Level 2 Unlocked!</h1>
+<h2>Will you be my Valentine? 🥹💖</h2>
+<p style="color:white;">⚠️ Don't you dare click NO 😤</p>
+
+<div id="btnWrap" style="position:relative; width:700px; height:300px; margin:50px auto;">
+  <button id="yesBtn" style="background:#2cffb3; padding:12px 20px; font-size:18px; border-radius:12px; position:absolute; left:160px; top:20px;">YES 😍</button>
+  <button id="noBtn" style="background:#ff5c5c; padding:12px 20px; font-size:18px; border-radius:12px; position:absolute; left:320px; top:20px;">NO 😜</button>
+</div>
+</div>
+
+<div id="finalMsg">
+<div class="msgBox">
+<h1>💖 Yayyyy 💖</h1>
+<h2>You just made my heart the happiest 🥹✨</h2>
+<p>
+Thank you for being my favorite person,  
+my smile reason, my comfort & my happiness 😘  
+<br><br>
+💜 Happy Valentine’s Day 💜
+</p>
+
+<div class="envelope" onclick="openGift()"></div>
+<p style="margin-top:8px;color:#ffffff;">Collect your gift !!</p>
+</div>
+</div>
+
+<div id="teddyPopup">
+<div class="teddyBox">
+<div class="teddy">🧸</div>
+<div class="teddyText">Happy Teddy Day 💙💜</div>
+</div>
+</div>
+
+<script>
+const grid=document.getElementById("grid");
+const gameScreen=document.getElementById("gameScreen");
+const mapScreen=document.getElementById("mapScreen");
+const questionScreen=document.getElementById("questionScreen");
+const finalMsg=document.getElementById("finalMsg");
+const timerEl=document.getElementById("timer");
+const teddyPopup=document.getElementById("teddyPopup");
+
+const icons=["🟦","🟪","🟨","🟩"];
+let selected=null;
+let matched=0;
+
+function shuffle(arr){return arr.sort(()=>Math.random()-0.5);}
+let pairs=shuffle([...icons,...icons]);
+
+pairs.forEach(icon=>{
+    let div=document.createElement("div");
+    div.className="dot";
+    div.textContent=icon;
+    div.onclick=()=>select(div);
+    grid.appendChild(div);
+});
+
+function select(el){
+    if(!selected){
+        selected=el;
+        el.classList.add("selected");
+    }else if(el!==selected){
+        if(el.textContent===selected.textContent){
+            el.style.visibility="hidden";
+            selected.style.visibility="hidden";
+            matched++;
+            sparkle(el);
+            sparkle(selected);
+            if(matched===icons.length) win();
+        }
+        selected.classList.remove("selected");
+        selected=null;
+    }
+}
+
+function sparkle(el){
+    let s=document.createElement("span");
+    s.textContent="✨";
+    s.style.position="absolute";
+    s.style.left=el.getBoundingClientRect().left+"px";
+    s.style.top=el.getBoundingClientRect().top+"px";
+    document.body.appendChild(s);
+    s.animate([{transform:"scale(0)"},{transform:"scale(2)",opacity:0}],{duration:600});
+    setTimeout(()=>s.remove(),600);
+}
+
+let time=30;
+let timer=setInterval(()=>{
+    time--;
+    timerEl.textContent="⏳ "+time+"s";
+    if(time===0) location.reload();
+},1000);
+
+function win(){
+    clearInterval(timer);
+    gameScreen.style.display="none";
+    mapScreen.style.display="block";
+    setTimeout(()=>{
+        mapScreen.style.display="none";
+        questionScreen.style.display="block";
+    },3000);
+}
+
+
+const noBtn = document.getElementById("noBtn");
+const container = document.getElementById("btnWrap");
+
+// Add smooth transition
+noBtn.style.transition = "all 0.3s ease";
+
+noBtn.addEventListener("mouseenter", moveNoBtn);
+
+function moveNoBtn() {
+    const padding = 5; // safe margin inside container
+
+    const containerRect = container.getBoundingClientRect();
+    const btnWidth = noBtn.offsetWidth;
+    const btnHeight = noBtn.offsetHeight;
+
+    // Random position inside container
+    const maxX = container.clientWidth - btnWidth - padding;
+    const maxY = container.clientHeight - btnHeight - padding;
+
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+
+    noBtn.style.left = x + "px";
+    noBtn.style.top = y + "px";
+}
+
+function showHint(x, y){
+    const hints = ["Nice try 😜","Not today 😏","Nopeee 😝","Almost 😆","Try again 🤭"];
+    const hint = document.createElement("div");
+    hint.className = "noHint";
+    hint.innerText = hints[Math.floor(Math.random()*hints.length)];
+
+    hint.style.left = x + "px";
+    hint.style.top = (y - 35) + "px";
+
+    document.body.appendChild(hint);
+    setTimeout(()=>hint.remove(),600);
+}
+
+
+
+
+document.getElementById("yesBtn").onclick=()=>{
+    finalMsg.style.display="flex";
+    confetti();
+};
+
+function confetti(){
+    for(let i=0;i<80;i++){
+        let c=document.createElement("div");
+        c.className="confetti";
+        c.style.left=Math.random()*100+"vw";
+        c.style.background=`hsl(${Math.random()*360},100%,60%)`;
+        c.style.animationDuration=(2+Math.random()*3)+"s";
+        document.body.appendChild(c);
+        setTimeout(()=>c.remove(),5000);
+    }
+}
+
+function openGift(){
+    teddyPopup.style.display="flex";
+}
+
+teddyPopup.onclick=()=>{
+    teddyPopup.style.display="none";
+};
+
+for(let i=0;i<30;i++){
+    let f=document.createElement("span");
+    f.textContent=["✨","💙","💜","⭐"][Math.floor(Math.random()*4)];
+    f.style.left=Math.random()*100+"vw";
+    f.style.animationDelay=Math.random()*5+"s";
+    document.querySelector(".floating").appendChild(f);
+}
+</script>
+
+</body>
+</html>
